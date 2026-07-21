@@ -1,0 +1,1 @@
+# Hàm đọc file (PDF/Text) và băm nhỏ (Chunking)

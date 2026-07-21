@@ -1,0 +1,1 @@
+# (DTO) Pydantic models định nghĩa Input/Output request

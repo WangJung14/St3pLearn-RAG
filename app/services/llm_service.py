@@ -1,0 +1,1 @@
+# Hàm giao tiếp với Ollama (Gửi Prompt)
