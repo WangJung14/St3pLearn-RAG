@@ -4,9 +4,14 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 
 # --- Schema cho API Chat (Retrieval & Generation) ---
+class Message(BaseModel):
+    role: str = Field(..., description="user hoặc assistant")
+    content: str = Field(..., description="Nội dung tin nhắn")
+
 class ChatRequest(BaseModel):
     course_id: str = Field(..., description="ID của khóa học để query đúng Vector DB")
     question: str = Field(..., description="Câu hỏi của học sinh")
+    history: List[Message] = Field(default=[], description="Lịch sử các tin nhắn hội thoại trước đó")
 
 class ChatResponse(BaseModel):
     answer: str = Field(..., description="Câu trả lời từ AI")

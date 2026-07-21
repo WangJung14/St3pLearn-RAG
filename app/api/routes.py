@@ -1,8 +1,10 @@
 # Controller định nghĩa các endpoint RAG & Document Ingestion
+import json
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, BackgroundTasks
+from fastapi.responses import StreamingResponse
 from app.models.schemas import ChatRequest, ChatResponse, UploadResponse, IngestDocumentRequest, IngestTaskResponse
 from app.services.document_service import process_and_store_document, process_async_ingestion
-from app.services.rag_service import get_answer_from_rag
+from app.services.rag_service import get_answer_from_rag, generate_rag_stream
 from app.db.vector_store import delete_vectors_by_document_id
 
 router = APIRouter(prefix="/api/ai", tags=["AI Core"])
@@ -64,3 +66,23 @@ async def delete_document_vectors(document_id: str):
 async def ask_course_assistant(request: ChatRequest):
     answer, sources = await get_answer_from_rag(request.question, request.course_id)
     return ChatResponse(answer=answer, source_chunks=sources)
+
+@router.post("/chat/stream")
+async def ask_course_assistant_stream(request: ChatRequest):
+    """
+    Endpoint chat RAG trả về dạng Server-Sent Events (SSE) để Frontend hiển thị chữ thời gian thực.
+    """
+    async def sse_generator():
+        async for chunk in generate_rag_stream(request.question, request.course_id, request.history):
+            # Mỗi event SSE có dạng: data: {"text": "..."}\n\n
+            yield f"data: {json.dumps({'text': chunk}, ensure_ascii=False)}\n\n"
+
+    return StreamingResponse(
+        sse_generator(),
+        media_type="text/event-stream",
+        headers={
+            "X-Accel-Buffering": "no",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive"
+        }
+    )
