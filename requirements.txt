@@ -18,3 +18,5 @@ sentence-transformers
 
 # --- Document Loaders (Xử lý file) ---
 pypdf
+python-docx
+httpx
