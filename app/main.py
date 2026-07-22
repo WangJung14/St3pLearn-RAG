@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from app.api.routes import router as ai_router
+from app.api.speaking_websocket import router as speaking_router
 
 app = FastAPI(
     title="St3pLearn AI Service",
@@ -17,6 +18,7 @@ async def health_check():
 
 # Đăng ký Controller vào App chính
 app.include_router(ai_router)
+app.include_router(speaking_router)
 
 if __name__ == "__main__":
     uvicorn.run("app.main:app", host="0.0.0.0", port=7777, reload=True)
