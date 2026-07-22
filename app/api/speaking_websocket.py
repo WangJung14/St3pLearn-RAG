@@ -27,6 +27,44 @@ async def call_ollama_chat(messages: list) -> str:
         result = response.json()
         return result.get("message", {}).get("content", "").strip()
 
+async def call_ollama_generate_hint(ai_reply: str) -> str:
+    """
+    Tạo gợi ý câu trả lời ngắn gọn (hint) cho học sinh dựa trên câu nói của AI
+    """
+    url = f"{OLLAMA_BASE_URL}/api/generate"
+    prompt = (
+        "You are an expert English tutor generating speaking hints. "
+        f"The AI examiner just said: '{ai_reply}'\n\n"
+        "Task: Suggest exactly 2 natural, short English replies (under 10 words each) for the student.\n"
+        "- Option 1 must be a direct, natural answer or agreement.\n"
+        "- Option 2 must be an elaboration, a different angle, or a polite follow-up question.\n\n"
+        "STRICT RULES:\n"
+        "1. Output NOTHING except the 2 options separated by ' | '.\n"
+        "2. Do not use quotes, do not say 'Here are...', do not explain.\n\n"
+        "EXAMPLE INPUT: 'What do you usually do in your free time?'\n"
+        "EXAMPLE OUTPUT: Option 1: I enjoy reading books and relaxing. | Option 2: I usually hit the gym to stay fit.\n\n"
+        "YOUR TURN:\n"
+        "OUTPUT:"
+    )
+    payload = {
+        "model": OLLAMA_MODEL,
+        "prompt": prompt,
+        "stream": False,
+        "options": {
+            "temperature": 0.3, # Giảm sáng tạo, tăng độ tuân thủ format
+            "top_p": 0.9
+        }
+    }
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.post(url, json=payload)
+            if response.status_code == 200:
+                result = response.json()
+                return result.get("response", "").strip()
+    except Exception as e:
+        print(f"[OllamaHint] Lỗi tạo gợi ý: {e}")
+    return "Yes, that sounds interesting! | Can you tell me more about it?"
+
 async def call_ollama_generate_json(prompt: str) -> dict:
     """
     Gọi Ollama Generate API ở chế độ JSON để chấm điểm/nhận xét
@@ -48,9 +86,9 @@ async def call_ollama_generate_json(prompt: str) -> dict:
         response_text = result.get("response", "").strip()
         return json.loads(response_text)
 
-async def send_evaluation_to_springboot(student_id: str, course_id: str, lesson_id: str, evaluation_data: dict):
+async def send_evaluation_to_springboot(student_id: str, course_id: str, lesson_id: str, evaluation_data: dict, token: str = ""):
     """
-    Gửi kết quả nhận xét từ AI sang Spring Boot lưu PostgreSQL
+    Gửi kết quả nhận xét từ AI sang Spring Boot lưu PostgreSQL với JWT token
     """
     payload = {
         "studentId": student_id,
@@ -62,6 +100,8 @@ async def send_evaluation_to_springboot(student_id: str, course_id: str, lesson_
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             headers = {"Content-Type": "application/json"}
+            if token:
+                headers["Authorization"] = f"Bearer {token}"
             response = await client.post(SPRING_BOOT_API_URL, json=payload, headers=headers)
             print(f"[SpeakingSync] Sync sang Spring Boot: HTTP {response.status_code}")
     except Exception as e:
@@ -73,7 +113,8 @@ async def speaking_websocket_endpoint(
     studentId: str = "unknown",
     courseId: str = "unknown",
     lessonId: str = "unknown",
-    topicContent: str = ""
+    topicContent: str = "",
+    token: str = ""
 ):
     await websocket.accept()
     print(f"[SpeakingWS] Học sinh {studentId} đã kết nối phòng nói chuyện (Lesson: {lessonId})")
@@ -105,11 +146,13 @@ async def speaking_websocket_endpoint(
         # TTS cho lời chào
         audio_base64 = await text_to_speech_base64(ai_response)
         
-        # Gửi về client
+        # Gửi về client kèm gợi ý phản hồi
+        hint_text = await call_ollama_generate_hint(ai_response)
         await websocket.send_json({
             "type": "AI_RESPONSE",
             "text": ai_response,
-            "audio": audio_base64
+            "audio": audio_base64,
+            "hint": hint_text
         })
         
         # 2. Vòng lặp giao tiếp
@@ -134,11 +177,13 @@ async def speaking_websocket_endpoint(
                 # Gọi TTS sinh giọng nói
                 audio_reply_b64 = await text_to_speech_base64(ai_reply)
                 
-                # Trả về cho client
+                # Trả về cho client kèm gợi ý phản hồi
+                hint_reply = await call_ollama_generate_hint(ai_reply)
                 await websocket.send_json({
                     "type": "AI_RESPONSE",
                     "text": ai_reply,
-                    "audio": audio_reply_b64
+                    "audio": audio_reply_b64,
+                    "hint": hint_reply
                 })
                 
             elif msg_type == "END_CALL":
@@ -182,8 +227,20 @@ async def speaking_websocket_endpoint(
                         "corrections": []
                     }
                 
+                # Trích xuất lịch sử cuộc trò chuyện
+                chat_history_list = []
+                for msg in conversation_history:
+                    if msg["role"] == "user":
+                        # Bỏ qua câu chào mồi hệ thống
+                        if msg["content"] != "Hello, let's start our conversation.":
+                            chat_history_list.append({"role": "user", "text": msg["content"]})
+                    elif msg["role"] == "assistant":
+                        chat_history_list.append({"role": "ai", "text": msg["content"]})
+                
+                eval_data["chatHistory"] = chat_history_list
+                
                 # Lưu vào Spring Boot DB
-                await send_evaluation_to_springboot(studentId, courseId, lessonId, eval_data)
+                await send_evaluation_to_springboot(studentId, courseId, lessonId, eval_data, token)
                 
                 # Bắn kết quả về cho client hiển thị UI
                 await websocket.send_json({
