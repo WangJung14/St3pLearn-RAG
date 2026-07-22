@@ -2,9 +2,13 @@
 import json
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, BackgroundTasks
 from fastapi.responses import StreamingResponse
-from app.models.schemas import ChatRequest, ChatResponse, UploadResponse, IngestDocumentRequest, IngestTaskResponse
+from app.models.schemas import (
+    ChatRequest, ChatResponse, UploadResponse, IngestDocumentRequest, IngestTaskResponse,
+    GenerateQuizRequest, GenerateQuizResponse, GenerateFlashcardRequest, GenerateFlashcardResponse
+)
 from app.services.document_service import process_and_store_document, process_async_ingestion
 from app.services.rag_service import get_answer_from_rag, generate_rag_stream
+from app.services.quiz_generator_service import generate_quiz_from_text, generate_flashcards_from_text
 from app.db.vector_store import delete_vectors_by_document_id
 
 router = APIRouter(prefix="/api/ai", tags=["AI Core"])
@@ -86,3 +90,30 @@ async def ask_course_assistant_stream(request: ChatRequest):
             "Connection": "keep-alive"
         }
     )
+
+@router.post("/quiz/generate", response_model=GenerateQuizResponse)
+async def ask_quiz_generation(request: GenerateQuizRequest):
+    """
+    Tự động tạo câu hỏi trắc nghiệm từ văn bản đầu vào.
+    """
+    try:
+        response = await generate_quiz_from_text(
+            request.text,
+            request.num_questions,
+            request.question_type,
+            request.existing_questions
+        )
+        return response
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/flashcard/generate", response_model=GenerateFlashcardResponse)
+async def ask_flashcard_generation(request: GenerateFlashcardRequest):
+    """
+    Tự động tạo flashcards từ văn bản đầu vào.
+    """
+    try:
+        response = await generate_flashcards_from_text(request.text, request.num_flashcards)
+        return response
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

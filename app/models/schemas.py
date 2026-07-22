@@ -35,3 +35,35 @@ class IngestTaskResponse(BaseModel):
     message: str
     document_id: str
     status: str = "PROCESSING"
+
+# --- Schemas cho Auto-Generate Quiz & Flashcard ---
+
+class Option(BaseModel):
+    id: str = Field(..., description="ID của đáp án, ví dụ: A, B, C, D")
+    text: str = Field(..., description="Nội dung đáp án")
+    is_correct: bool = Field(..., description="Đúng (true) hoặc Sai (false)")
+
+class Question(BaseModel):
+    question_text: str = Field(..., description="Nội dung câu hỏi")
+    options: List[Option] = Field(default=[], description="Danh sách đáp án (nếu có)")
+    explanation: str = Field(..., description="Giải thích vì sao đáp án đó đúng hoặc câu trả lời mẫu")
+
+class GenerateQuizRequest(BaseModel):
+    text: str = Field(..., description="Nội dung văn bản làm căn cứ tạo câu hỏi")
+    num_questions: int = Field(default=5, description="Số lượng câu hỏi muốn tạo")
+    question_type: str = Field(default="SINGLE_CHOICE", description="Loại câu hỏi muốn tạo (SINGLE_CHOICE, MULTIPLE_CHOICE, TRUE_FALSE, ESSAY)")
+    existing_questions: List[str] = Field(default=[], description="Danh sách tiêu đề câu hỏi đã tồn tại để tránh trùng lặp")
+
+class GenerateQuizResponse(BaseModel):
+    questions: List[Question] = Field(..., description="Danh sách các câu hỏi trắc nghiệm")
+
+class FlashcardItem(BaseModel):
+    front: str = Field(..., description="Từ vựng hoặc khái niệm (Mặt trước)")
+    back: str = Field(..., description="Định nghĩa hoặc nghĩa tiếng Việt (Mặt sau)")
+
+class GenerateFlashcardRequest(BaseModel):
+    text: str = Field(..., description="Nội dung văn bản làm căn cứ tạo flashcards")
+    num_flashcards: int = Field(default=5, description="Số lượng flashcard muốn tạo")
+
+class GenerateFlashcardResponse(BaseModel):
+    flashcards: List[FlashcardItem] = Field(..., description="Danh sách các thẻ flashcard")
