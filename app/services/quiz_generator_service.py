@@ -35,22 +35,23 @@ async def generate_quiz_from_text(
     # Xây dựng chỉ dẫn loại câu hỏi
     if question_type == "MULTIPLE_CHOICE":
         type_instruction = (
-            f"tạo ra đúng {num_questions} câu hỏi trắc nghiệm chọn nhiều đáp án đúng (Multiple Choice).\n"
+            f"tạo ra đúng {num_questions} câu hỏi trắc nghiệm chọn nhiều đáp án đúng (Multiple Choice) bằng Tiếng Anh.\n"
             "YÊU CẦU BẮT BUỘC:\n"
-            "1. Mỗi câu hỏi phải có đúng 4 đáp án (lần lượt gắn ID là: \"A\", \"B\", \"C\", \"D\").\n"
-            "2. Phải có từ 2 đến 3 đáp án đúng (is_correct: true), các đáp án còn lại là sai (is_correct: false).\n"
-            "3. Phần giải thích (explanation) phải nêu rõ lý do tại sao các đáp án đúng đó là chính xác bằng tiếng Việt.\n"
+            "1. Nội dung câu hỏi (question_text) và văn bản đáp án (options.text) BẮT BUỘC phải viết bằng Tiếng Anh.\n"
+            "2. Mỗi câu hỏi phải có đúng 4 đáp án (lần lượt gắn ID là: \"A\", \"B\", \"C\", \"D\").\n"
+            "3. Phải có từ 2 đến 3 đáp án đúng (is_correct: true), các đáp án còn lại là sai (is_correct: false).\n"
+            "4. Phần giải thích (explanation) phải giải thích chi tiết ngữ pháp tại sao đáp án đó là chính xác bằng Tiếng Việt.\n"
         )
         sample_json = (
             "{\n"
             "  \"questions\": [\n"
             "    {\n"
-            "      \"question_text\": \"Những từ nào sau đây là danh từ?\",\n"
+            "      \"question_text\": \"Which of the following words are nouns?\",\n"
             "      \"options\": [\n"
-            "        {\"id\": \"A\", \"text\": \"Run\", \"is_correct\": false},\n"
-            "        {\"id\": \"B\", \"text\": \"Apple\", \"is_correct\": true},\n"
-            "        {\"id\": \"C\", \"text\": \"Happiness\", \"is_correct\": true},\n"
-            "        {\"id\": \"D\", \"text\": \"Beautiful\", \"is_correct\": false}\n"
+            "        {\"id\": \"A\", \"text\": \"run\", \"is_correct\": false},\n"
+            "        {\"id\": \"B\", \"text\": \"apple\", \"is_correct\": true},\n"
+            "        {\"id\": \"C\", \"text\": \"happiness\", \"is_correct\": true},\n"
+            "        {\"id\": \"D\", \"text\": \"beautiful\", \"is_correct\": false}\n"
             "      ],\n"
             "      \"explanation\": \"Apple và Happiness là danh từ. Run là động từ, Beautiful là tính từ.\"\n"
             "    }\n"
@@ -59,38 +60,40 @@ async def generate_quiz_from_text(
         )
     elif question_type == "TRUE_FALSE":
         type_instruction = (
-            f"tạo ra đúng {num_questions} câu hỏi Đúng/Sai (True/False).\n"
+            f"tạo ra đúng {num_questions} câu hỏi Đúng/Sai (True/False) bằng Tiếng Anh.\n"
             "YÊU CẦU BẮT BUỘC:\n"
-            "1. Mỗi câu hỏi chỉ có đúng 2 đáp án (gắn ID là \"A\" và \"B\").\n"
-            "2. Một đáp án có text là \"Đúng\" (True), đáp án kia là \"Sai\" (False). Chỉ có 1 đáp án có is_correct: true.\n"
-            "3. Phần giải thích (explanation) giải thích ngắn gọn bằng tiếng Việt.\n"
+            "1. Nội dung câu hỏi (question_text) BẮT BUỘC phải viết bằng Tiếng Anh.\n"
+            "2. Mỗi câu hỏi chỉ có đúng 2 đáp án (gắn ID là \"A\" và \"B\").\n"
+            "3. Đáp án A có text là \"True\", đáp án B có text là \"False\". Chỉ có duy nhất 1 đáp án có is_correct: true.\n"
+            "4. Phần giải thích (explanation) giải thích ngắn gọn bằng Tiếng Việt.\n"
         )
         sample_json = (
             "{\n"
             "  \"questions\": [\n"
             "    {\n"
-            "      \"question_text\": \"Trái Đất quay quanh Mặt Trời.\",\n"
+            "      \"question_text\": \"The sun rises in the east.\",\n"
             "      \"options\": [\n"
-            "        {\"id\": \"A\", \"text\": \"Đúng\", \"is_correct\": true},\n"
-            "        {\"id\": \"B\", \"text\": \"Sai\", \"is_correct\": false}\n"
+            "        {\"id\": \"A\", \"text\": \"True\", \"is_correct\": true},\n"
+            "        {\"id\": \"B\", \"text\": \"False\", \"is_correct\": false}\n"
             "      ],\n"
-            "      \"explanation\": \"Trái Đất thực sự quay quanh Mặt Trời theo chu kỳ khoảng 365 ngày.\"\n"
+            "      \"explanation\": \"Mặt trời thực tế mọc ở phía Đông và lặn ở phía Tây.\"\n"
             "    }\n"
             "  ]\n"
             "}"
         )
     elif question_type == "ESSAY":
         type_instruction = (
-            f"tạo ra đúng {num_questions} câu hỏi tự luận/điền từ/trả lời ngắn (Essay/Text).\n"
+            f"tạo ra đúng {num_questions} câu hỏi tự luận/điền từ/trả lời ngắn (Essay/Text) bằng Tiếng Anh.\n"
             "YÊU CẦU BẮT BUỘC:\n"
-            "1. options để trống (mảng rỗng []).\n"
-            "2. Phần giải thích (explanation) bắt buộc phải chứa nội dung câu trả lời mẫu (Sample Answer) hoặc hướng dẫn giải chi tiết bằng tiếng Việt.\n"
+            "1. Nội dung câu hỏi (question_text) BẮT BUỘC phải viết bằng Tiếng Anh.\n"
+            "2. options để trống (mảng rỗng []).\n"
+            "3. Phần giải thích (explanation) bắt buộc phải chứa nội dung câu trả lời mẫu (Sample Answer) bằng Tiếng Anh hoặc hướng dẫn giải chi tiết bằng Tiếng Việt.\n"
         )
         sample_json = (
             "{\n"
             "  \"questions\": [\n"
             "    {\n"
-            "      \"question_text\": \"Hãy giải thích khái niệm của thì hiện tại hoàn thành và cho ví dụ.\",\n"
+            "      \"question_text\": \"Explain the usage of the present perfect tense and give an example.\",\n"
             "      \"options\": [],\n"
             "      \"explanation\": \"Câu trả lời cần nêu được cấu trúc S + have/has + V3, diễn tả hành động bắt đầu trong quá khứ kéo dài đến hiện tại. Ví dụ: I have lived here for 5 years.\"\n"
             "    }\n"
@@ -99,22 +102,23 @@ async def generate_quiz_from_text(
         )
     else: # SINGLE_CHOICE
         type_instruction = (
-            f"tạo ra đúng {num_questions} câu hỏi trắc nghiệm chọn 1 đáp án đúng (Single Choice).\n"
+            f"tạo ra đúng {num_questions} câu hỏi trắc nghiệm chọn 1 đáp án đúng (Single Choice) bằng Tiếng Anh.\n"
             "YÊU CẦU BẮT BUỘC:\n"
-            "1. Mỗi câu hỏi phải có đúng 4 đáp án (lần lượt gắn ID là: \"A\", \"B\", \"C\", \"D\").\n"
-            "2. Chỉ có duy nhất 1 đáp án đúng (is_correct: true), 3 đáp án còn lại là sai (is_correct: false).\n"
-            "3. Phần giải thích (explanation) phải nêu rõ lý do tại sao đáp án đúng đó là chính xác bằng tiếng Việt.\n"
+            "1. Nội dung câu hỏi (question_text) và các văn bản đáp án (options.text) BẮT BUỘC phải viết bằng Tiếng Anh.\n"
+            "2. Mỗi câu hỏi phải có đúng 4 đáp án (lần lượt gắn ID là: \"A\", \"B\", \"C\", \"D\").\n"
+            "3. Chỉ có duy nhất 1 đáp án đúng (is_correct: true), 3 đáp án còn lại là sai (is_correct: false).\n"
+            "4. Phần giải thích (explanation) phải nêu rõ lý do tại sao đáp án đúng đó là chính xác bằng Tiếng Việt.\n"
         )
         sample_json = (
             "{\n"
             "  \"questions\": [\n"
             "    {\n"
-            "      \"question_text\": \"Thì hiện tại đơn được dùng để làm gì?\",\n"
+            "      \"question_text\": \"What is the main function of the simple present tense?\",\n"
             "      \"options\": [\n"
-            "        {\"id\": \"A\", \"text\": \"Diễn tả hành động đang xảy ra tại thời điểm nói\", \"is_correct\": false},\n"
-            "        {\"id\": \"B\", \"text\": \"Diễn tả hành động lặp đi lặp lại hoặc thói quen\", \"is_correct\": true},\n"
-            "        {\"id\": \"C\", \"text\": \"Diễn tả hành động xảy ra và kết thúc trong quá khứ\", \"is_correct\": false},\n"
-            "        {\"id\": \"D\", \"text\": \"Diễn tả hành động sẽ xảy ra trong tương lai\", \"is_correct\": false}\n"
+            "        {\"id\": \"A\", \"text\": \"To express an action happening right now\", \"is_correct\": false},\n"
+            "        {\"id\": \"B\", \"text\": \"To describe habits and repeated actions\", \"is_correct\": true},\n"
+            "        {\"id\": \"C\", \"text\": \"To talk about an action finished in the past\", \"is_correct\": false},\n"
+            "        {\"id\": \"D\", \"text\": \"To refer to a future plan\", \"is_correct\": false}\n"
             "      ],\n"
             "      \"explanation\": \"Thì hiện tại đơn dùng để diễn tả các thói quen, hành động lặp đi lặp lại hàng ngày.\"\n"
             "    }\n"
@@ -125,6 +129,7 @@ async def generate_quiz_from_text(
     prompt = (
         "Bạn là một chuyên gia khảo thí và ra đề thi chuyên nghiệp.\n"
         f"Nhiệm vụ của bạn là đọc kỹ đoạn nội dung bài học dưới đây và {type_instruction}\n"
+        "BẮT BUỘC: Câu hỏi và các phương án chọn phải viết hoàn toàn bằng TIẾNG ANH. Chỉ phần giải thích (explanation) là viết bằng TIẾNG VIỆT.\n"
         "Trả về đúng định dạng JSON yêu cầu. Không thêm bất cứ ký tự hay giải thích nào ngoài chuỗi JSON.\n\n"
         f"{avoid_duplicates_text}"
         f"ĐỊNH DẠNG JSON MẪU:\n{sample_json}\n\n"
