@@ -55,6 +55,35 @@ sequenceDiagram
 
 ---
 
+## 📁 Cấu trúc Thư mục & Vai trò từng File (Directory Structure & File Roles)
+
+```text
+ai-service/
+├── app/
+│   ├── api/
+│   │   ├── routes.py                 # Định nghĩa các REST API Endpoints chính (nhận tài liệu khóa học, chat RAG, sinh Quiz, Flashcard).
+│   │   └── speaking_websocket.py      # Endpoint WebSocket (/ws) duy trì kết nối phòng luyện nói phản xạ, xử lý STT, tạo gợi ý, Edge TTS và gửi nhận xét sửa lỗi về Spring Boot.
+│   ├── core/
+│   │   └── config.py                 # Nạp và quản lý các cấu hình hệ thống, biến môi trường (.env) như URL của Ollama, tên mô hình LLM, URL Spring Boot.
+│   ├── db/
+│   │   └── vector_store.py           # Kết nối cơ sở dữ liệu vector ChromaDB; lưu trữ, xóa và truy vấn các đoạn văn bản (chunks) tương đồng nhất.
+│   ├── models/
+│   │   └── schemas.py                # Định nghĩa các mô hình Pydantic để kiểm duyệt cấu trúc dữ liệu đầu vào và đầu ra cho các API.
+│   ├── services/
+│   │   ├── document_service.py       # Trích xuất chữ thô từ tệp (.pdf, .docx, .txt), cắt nhỏ văn bản (sliding window) và xử lý nạp tài liệu không đồng bộ ngầm.
+│   │   ├── edge_tts_service.py       # Tích hợp thư viện edge-tts chuyển văn bản tiếng Anh của AI thành luồng âm thanh Base64.
+│   │   ├── llm_service.py            # Dịch vụ phụ trợ tương tác trực tiếp với Ollama (gọi API sinh văn bản, chat...).
+│   │   ├── quiz_generator_service.py # Biên soạn đề thi thông qua gọi Ollama JSON Mode, có cơ chế tự động thử lại (Retry) tối đa 3 lần khi lỗi cú pháp.
+│   │   └── rag_service.py            # Nhận câu hỏi, truy xuất ngữ cảnh liên quan từ ChromaDB, ghép vào system prompt nghiêm ngặt và gọi stream chat từ Ollama.
+│   └── main.py                       # Điểm khởi chạy FastAPI, cấu hình CORS (cho phép Next.js gọi API) và đăng ký các routes chính.
+├── data/
+│   └── chroma_db/                    # Thư mục lưu trữ dữ liệu vector ChromaDB cục bộ dưới dạng file trên ổ cứng.
+├── requirements.txt                  # Danh sách các thư viện Python cần cài đặt.
+└── .env                              # Lưu trữ các biến môi trường cấu hình cổng chạy, URL dịch vụ.
+```
+
+---
+
 ## ⚡ Hướng dẫn Cài đặt & Khởi chạy (Setup & Running)
 
 ### 1. Cài đặt Python Virtual Environment
